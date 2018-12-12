@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link href="https://fonts.googleapis.com/css?family=Caveat" rel="stylesheet">
+  <title>Recipes Example</title>
+  <style media="screen">
+    body {
+      margin-left: 5vw;
+      margin-right: 5vw;
+      margin-top: 10vw;
+    }
+    input {
+      background-color: #ADFF2F;
+      border: none;
+      border-radius: 8px;
+      padding: 8px;
+      outline: none;
+      font-weight: bold;
+      margin: 0.2rem;
+    }
+    button {
+      background-color: grey;
+      border: none;
+      padding: 8px;
+      border-radius: 8px;
+      outline: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    span {
+      color: red;
+    }
+    h2 {
+      font-family: 'Caveat', cursive;
+      font-size: 3rem;
+      text-align: center;
+      margin: 0;
+    }
+    #search {
+      font-family: 'Caveat', cursive;
+      font-size: 1.4rem;
+      margin: 0;
+      float: left;
+    }
+    h3 {
+      background-color: #ADFF2F;
+      font-family: 'Caveat', cursive;
+      font-size: 1.4rem;
+      margin: 0;
+      border-radius: 8px;
+      margin-top: 0.5rem;
+    }
+    h4 {
+      background-color: lightgrey;
+      font-family: monospace;
+      font-size: 0.9rem;
+      margin: 0;
+      border-radius: 5px;
+    }
+    #output {
+      font-family: 'Caveat', cursive;
+    }
+    .uniqueList {
+      font-family: 'Caveat', cursive;
+      display: block;
+    }
+    #uniqueList {
+      font-weight: bold;
+      color: red;
+    }
+    .largeRecipes {
+      font-family: 'Caveat', cursive;
+      display: block;
+    }
+    #largeRecipes {
+      font-weight: bold;
+      color: red;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2 id="search">Search for recipes using up to 3 ingredients below...</h2>
+  <br>
+  <br>
+  <input type="text" id="ingredient1"></input>
+  <input type="text" id="ingredient2"></input>
+  <input type="text" id="ingredient3"></input>
+  <button id="getPosts">Go!</button>
+
+  <div class="uniqueList">
+    Unique number of ingredients on this page: <span id="uniqueList"></span>
+  </div>
+  <div class="largeRecipes">
+    <b>Large recipes</b> (recipes with more than 10 ingredients): <span id="largeRecipes"></span>
+  </div>
+  <div id="output"></div>
+
+  <script src="jquery-3.3.1.min.js"></script>
+  <script type="text/javascript">
+    document.getElementById('getPosts').addEventListener('click', getPosts);
+    let ing1, ing2, ing3;
+
+    function onlyUnique(value, index, self){
+      return self.indexOf(value) === index;
+    }
+
+    function shuffle(array) {
+      var currentIndex = array.length,
+        temporaryValue, randomIndex;
+
+      // While there remain elements to shuffle...
+      while (0 !== currentIndex) {
+
+        // Pick a remaining element...
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex -= 1;
+
+        // And swap it with the current element.
+        temporaryValue = array[currentIndex];
+        array[currentIndex] = array[randomIndex];
+        array[randomIndex] = temporaryValue;
+      }
+
+      return array;
+    }
+
+    function getPosts() {
+      ing1 = document.getElementById('ingredient1').value;
+      ing2 = document.getElementById('ingredient2').value;
+      ing3 = document.getElementById('ingredient3').value;
+      const proxyurl = "https://cors-anywhere.herokuapp.com/";
+      const url = `http://www.recipepuppy.com/api/?i=${ing1},${ing2},${ing3}&p=1`;
+      fetch(proxyurl + url)
+        .then(response => response.json())
+        .then(contents => {
+          let output = '<h2>Recipes</h2>';
+          let test = contents.results;
+          let allIngredients = [];
+          let largeRecipes = 0;
+          for (let i = 0; i < 10; i++) {
+            let ingredients = test[i].ingredients.replace(/, /g, ',').split(',');
+            let array = [ing1, ing2, ing3];
+            let array1 = `<span>${ing1}</span>`;
+            let array2 = `<span>${ing2}</span>`;
+            let array3 = `<span>${ing3}</span>`;
+            let newArray = [];
+            if (ingredients.indexOf(ing1) != -1) {
+              newArray.push(array1);
+              ingredients.splice(ingredients.indexOf(ing1), 1);
+            }
+            if (ingredients.indexOf(ing2) != -1) {
+              newArray.push(array2);
+              ingredients.splice(ingredients.indexOf(ing2), 1);
+            }
+            if (ingredients.indexOf(ing3) != -1) {
+              newArray.push(array3);
+              ingredients.splice(ingredients.indexOf(ing3), 1);
+            }
+            newArray.push(...ingredients);
+            output += `
+            <h3>${test[i].title}</h3>
+            <h4>Ingredients: ${shuffle(newArray).filter(onlyUnique)}</h4>
+            <h4>Number of Ingredients: ${newArray.filter(onlyUnique).length}</h4>
+            `;
+            allIngredients.push(...test[i].ingredients.replace(/, /g, ',').split(','));
+            if (newArray.length > 10) {
+              largeRecipes ++;
+            }
+          }
+          // console.log(allIngredients);
+          // console.log(allIngredients.filter(onlyUnique));
+          document.getElementById('uniqueList').innerHTML = allIngredients.filter(onlyUnique).length;
+          document.getElementById('largeRecipes').innerHTML = largeRecipes;
+          document.getElementById('output').innerHTML = output;
+        });
+    }
+
+  </script>
+</body>
+
+</html>
